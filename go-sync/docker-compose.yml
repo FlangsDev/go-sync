@@ -1,0 +1,24 @@
+services:
+ neo4j-sync-go:
+  build :
+      context: .
+      dockerfile: alpine.Dockerfile
+  container_name: go-sync
+  restart: unless-stopped
+  environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-password123}
+  volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+  command:
+      - "-neo4j-uri=neo4j://neo4j:7687"
+      - "-neo4j-user=${NEO4J_USER:-neo4j}"
+      - "-timeout=30s"
+      - "-debounce=2s"
+      - "-fallback-poll=5m"
+  networks:
+      - dockernet
+networks:
+  dockernet:
+    external: true
+    name: testing-neo4j_default
