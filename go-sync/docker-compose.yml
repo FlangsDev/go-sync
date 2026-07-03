@@ -21,4 +21,4 @@ services:
 networks:
   dockernet:
     external: true
-    name: testing-neo4j_default
+    name: neo4j_default

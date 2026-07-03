@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
@@ -243,7 +244,7 @@ func (s *Syncer) FullSync(ctx context.Context) error {
 	}
 
 	// Bersihkan node yang sudah tidak ada lagi di Docker tapi masih nyangkut di Neo4j
-	if err := pruneStale(ctx, session, "Container", idSet(containers, func(c container.Summary) string { return c.ID })); err != nil {
+	if err := pruneStale(ctx, session, "Container", idSet(containers, func(c types.Container) string { return c.ID })); err != nil {
 		return fmt.Errorf("gagal prune container basi: %w", err)
 	}
 	if err := pruneStale(ctx, session, "Image", idSet(images, func(i image.Summary) string { return i.ID })); err != nil {
@@ -315,7 +316,7 @@ func ensureConstraints(ctx context.Context, driver neo4j.DriverWithContext, time
 // Node Ingestors (sama seperti versi sebelumnya, sudah dibuat nil-safe)
 // ---------------------------------------------------------------------------
 
-func ingestNodes(ctx context.Context, session neo4j.SessionWithContext, containers []container.Summary, images []image.Summary, networks []network.Summary) error {
+func ingestNodes(ctx context.Context, session neo4j.SessionWithContext, containers []types.Container, images []image.Summary, networks []network.Summary) error {
 	containerData := make([]map[string]any, 0, len(containers))
 	for _, c := range containers {
 		containerData = append(containerData, map[string]any{
@@ -389,7 +390,7 @@ func ingestNodes(ctx context.Context, session neo4j.SessionWithContext, containe
 // Relationship Ingestors
 // ---------------------------------------------------------------------------
 
-func ingestRelationships(ctx context.Context, session neo4j.SessionWithContext, containers []container.Summary, gen int64) error {
+func ingestRelationships(ctx context.Context, session neo4j.SessionWithContext, containers []types.Container, gen int64) error {
 	relContainerImage := make([]map[string]any, 0)
 	relContainerNetwork := make([]map[string]any, 0)
 	networkMembers := make(map[string][]string)
@@ -512,7 +513,7 @@ func ingestRelationships(ctx context.Context, session neo4j.SessionWithContext, 
 // Helpers
 // ---------------------------------------------------------------------------
 
-func containerName(c container.Summary) string {
+func containerName(c types.Container) string {
 	if len(c.Names) == 0 {
 		return ""
 	}
